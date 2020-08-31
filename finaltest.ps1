@@ -11,7 +11,7 @@ function Do-KuduZipFile($method, $url, $localPath, $username, $password) {
         Invoke-RestMethod -Uri $url `
                         -Headers @{ Authorization = "Basic $token" } `
                         -Method $method `
-                        -OutFile $env:TEMP\output.zip `
+                        -OutFile $localPath\output.zip `
                         -ContentType "multipart/form-data"
     } catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
@@ -33,8 +33,8 @@ function Get-Credentials($app, $resourceName, $resourceGroupName) {
        return $publishingCredentials;
 }
 
-# $localPath = $env:TEMP\output.zip
-# Write-Host "localPath: $localPath";
+$localPath = Set-Location -Path C:\Users\AzureUser\Desktop -PassThru;
+Write-Host "localPath: $localPath";
 
 $resourceGroupName = "rg-eazyloan-dev";
 $appname = "app-eazyloan-dev-weu";
