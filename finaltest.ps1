@@ -5,14 +5,16 @@ function Get-KuduApiAuthorisationHeaderValue($userName, $password) {
 
 function Do-KuduZipFile($method, $url, $localPath, $username, $password) {
     $token = Get-KuduApiAuthorisationHeaderValue $username $password;
-    Write-Host $myheader;
+    Write-Host $env:TEMP;
     try
     {
+        $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
+        [Net.ServicePointManager]::SecurityProtocol = $AllProtocols;
         Invoke-RestMethod -Uri $url `
                         -Headers @{ Authorization = "Basic $token" } `
                         -Method $method `
-                        -OutFile $localPath\output.zip `
-                        -ContentType "multipart/form-data"
+                        -OutFile $ENV:BUILD_STAGINGDIRECTORY\website.zip `
+                        -ContentType 'multipart/form-data'
     } catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
@@ -21,6 +23,27 @@ function Do-KuduZipFile($method, $url, $localPath, $username, $password) {
         }
     }    
 }
+
+# function Put-KuduZipFile($method, $url, $localPath, $username, $password) {
+#     $token = Get-KuduApiAuthorisationHeaderValue $username $password;
+#     Write-Host $env:TEMP;
+#     try
+#     {
+#         $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
+#         [Net.ServicePointManager]::SecurityProtocol = $AllProtocols;
+#         Invoke-RestMethod -Uri $url `
+#                         -Headers @{ Authorization = "Basic $token" } `
+#                         -Method $method `
+#                         -InFile $localPath `
+#                         -ContentType "multipart/form-data"
+#     } catch {
+#         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
+#         Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription
+#         if (-not ($_.Exception.Response.StatusCode.value__ -eq 404)) {
+#             throw $PSItem
+#         }
+#     }    
+# }
 
 function Get-Credentials($app, $resourceName, $resourceGroupName) {
        $resourceType = "Microsoft.Web/sites/config";
@@ -33,8 +56,20 @@ function Get-Credentials($app, $resourceName, $resourceGroupName) {
        return $publishingCredentials;
 }
 
-$localPath = Set-Location -Path C:\Users\AzureUser\Desktop -PassThru;
-Write-Host "localPath: $localPath";
+# function Get-SlotCredentials($app, $resourceName, $resourceGroupName) {
+#     $resourceType = "Microsoft.Web/sites/slots/config";
+#     $publishingCredentials = Invoke-AzResourceAction `
+#                   -ResourceGroupName $app.ResourceGroup`
+#                   -ResourceType $resourceType `
+#                   -ResourceName $resourceName `
+#                   -Action list `
+#                   -Force;
+#     return $publishingCredentials;
+# }
+
+
+$localPath = "C:\Users\AzureUser\Documents\website.zip";
+# Write-Host "localPath: $localPath";
 
 $resourceGroupName = "rg-eazyloan-dev";
 $appname = "app-eazyloan-dev-weu";
@@ -51,17 +86,16 @@ $productionUrl = "https://$($app.Name).scm.azurewebsites.net/api/zip/site/wwwroo
 
 Do-KuduZipFile $method $productionUrl $localPath $productionUsername $productionPassword;
 
-# $stagingAppname = "my-staging-app";
-# $stagingApp = Get-AzWebApp -ResourceGroupName $resourceGroupName -Name $stagingAppname;
+# $stagingApp = Get-AzWebAppSlot -ResourceGroupName $resourceGroupName -Name $appname -Slot "staging";
 # $stagingResourceName = "$($stagingApp.Name)/publishingcredentials";
 
-# $publishingCredentials = Get-Credentials $stagingResourceName $resourceGroupName;
+# $publishingCredentials = Get-SlotCredentials $stagingApp $stagingResourceName $resourceGroupName;
 
-# $method = 'Put';
+# $stagingMethod = 'Put';
 # $stagingUsername = $publishingCredentials.Properties.PublishingUserName;
 # $stagingPassword = $publishingCredentials.Properties.PublishingPassword;
-# $stagingUrl = "https://$($app.Name).scm.azurewebsites.net/api/zip/site/wwwroot/Downloads/?recursive=true";
+# $stagingUrl = "https://$($stagingApp.Name).scm.azurewebsites.net/api/zipdeploy";
 
 
 
-# Do-KuduZipFile $method $stagingUrl $localPath $stagingUsername $stagingPassword;
+# Put-KuduZipFile $stagingMethod $stagingUrl $localPath $stagingUsername $stagingPassword;
