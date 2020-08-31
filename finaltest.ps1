@@ -11,9 +11,9 @@ function Do-KuduZipFile($method, $url, $localPath, $username, $password) {
         $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
         [Net.ServicePointManager]::SecurityProtocol = $AllProtocols;
         Invoke-RestMethod -Uri $url `
-                        -Headers @{ Authorization = "Basic $token" } `
+                        -Headers @{ Authorization = "Basic $token"; Accept = '*/*' } `
                         -Method $method `
-                        -OutFile $ENV:BUILD_STAGINGDIRECTORY\website.zip `
+                        -OutFile $localPath `
                         -ContentType 'multipart/form-data'
     } catch {
         Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ 
@@ -68,7 +68,7 @@ function Get-Credentials($app, $resourceName, $resourceGroupName) {
 # }
 
 
-$localPath = "C:\Users\AzureUser\Documents\website.zip";
+$localPath = "$Env:BUILD_STAGINGDIRECTORY";
 # Write-Host "localPath: $localPath";
 
 $resourceGroupName = "rg-eazyloan-dev";
@@ -85,6 +85,8 @@ $productionPassword = $publishingCredentials.Properties.PublishingPassword;
 $productionUrl = "https://$($app.Name).scm.azurewebsites.net/api/zip/site/wwwroot/";
 
 Do-KuduZipFile $method $productionUrl $localPath $productionUsername $productionPassword;
+
+Get-ChildItem $Env:BUILD_STAGINGDIRECTORY;
 
 # $stagingApp = Get-AzWebAppSlot -ResourceGroupName $resourceGroupName -Name $appname -Slot "staging";
 # $stagingResourceName = "$($stagingApp.Name)/publishingcredentials";
