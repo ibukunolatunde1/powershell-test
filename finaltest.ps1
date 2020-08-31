@@ -68,7 +68,7 @@ function Get-Credentials($app, $resourceName, $resourceGroupName) {
 # }
 
 
-$localPath = "$Env:BUILD_STAGINGDIRECTORY";
+$localPath = "$Env:BUILD_STAGINGDIRECTORY\website.zip";
 # Write-Host "localPath: $localPath";
 
 $resourceGroupName = "rg-eazyloan-dev";
